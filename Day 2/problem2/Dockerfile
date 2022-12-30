@@ -1,10 +1,13 @@
-FROM ubuntu
-RUN apt-get update && apt-get install -y build-essential
-RUN apt-get install -y nodejs npm
+#building stage
+FROM node:alpine3.16 AS build
 WORKDIR /app
-RUN npm install -g create-react-app
-RUN create-react-app react_app
-WORKDIR /app/react_app
+COPY package*.json ./
 RUN npm install
+COPY . .
 EXPOSE 3000
-CMD [ "npm","start" ]
+RUN npm run build 
+#deploy stage
+FROM nginx
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD [ "nginx", "-g", "daemon off;" ]
